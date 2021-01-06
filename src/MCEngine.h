@@ -121,8 +121,8 @@ void MCEngine::RUN_MC()
         File_Out_theta_phi = "ThetaPhi_Temp" + string(temp_char) + ".txt";
         ofstream File_Out_Theta_Phi(File_Out_theta_phi.c_str());
 
-        File_Out_local_density = "local_density" + string(temp_char) + ".txt";
-        ofstream File_Out_Local_Density(File_Out_local_density.c_str());
+//        File_Out_local_density = "local_density" + string(temp_char) + ".txt";
+//        ofstream File_Out_Local_Density(File_Out_local_density.c_str());
 
         File_Out_real_space_corr = "classical_real_space_corr" + string(temp_char) + ".txt";
         ofstream File_Out_Real_Space_Corr(File_Out_real_space_corr.c_str());
@@ -130,11 +130,11 @@ void MCEngine::RUN_MC()
         File_Out_q_space_corr = "classical_momentum_space_corr" + string(temp_char) + ".txt";
         ofstream File_Out_Q_Space_Corr(File_Out_q_space_corr.c_str());
 
-        File_Out_quantum_real_space_corr = "quantum_real_space_corr" + string(temp_char) + ".txt";
-        ofstream File_Out_Quantum_Real_Space_Corr(File_Out_quantum_real_space_corr.c_str());
+//        File_Out_quantum_real_space_corr = "quantum_real_space_corr" + string(temp_char) + ".txt";
+//        ofstream File_Out_Quantum_Real_Space_Corr(File_Out_quantum_real_space_corr.c_str());
 
-        File_Out_quantum_q_space_corr = "quantum_momentum_space_corr" + string(temp_char) + ".txt";
-        ofstream File_Out_Quantum_Q_Space_Corr(File_Out_quantum_q_space_corr.c_str());
+//        File_Out_quantum_q_space_corr = "quantum_momentum_space_corr" + string(temp_char) + ".txt";
+//        ofstream File_Out_Quantum_Q_Space_Corr(File_Out_quantum_q_space_corr.c_str());
 
         file_out_progress << "Total " << Parameters_.IterMax << " sweeps are performed." << endl;
         file_out_progress << "First " << Parameters_.IterMax - (Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg) << " sweeps are used for thermalization and every " << Gap_bw_sweeps + 1 << " in last " << Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg << " sweeps are used for measurement." << endl;
@@ -166,7 +166,7 @@ void MCEngine::RUN_MC()
         //        assert(false);
 
         n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
-        if(!Parameters_.fixed_mu_value){
+        if(!Parameters_.fix_mu){
             initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
         }
         else{
@@ -237,21 +237,8 @@ void MCEngine::RUN_MC()
                     MFParams_.FieldThrow(i, Parameters_.MC_DOF[mc_dof]);
                     CurrE = Hamiltonian_.GetCLEnergy();
 
-                    if (count < (Parameters_.IterMax - (Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg)))
-                    {
-                        Parameters_.Dflag = 'N'; //N
-                    }
-                    else
-                    {
-                        if (ED_)
-                        {
-                            Parameters_.Dflag = 'N'; //quantum observables are calculated separately.
-                        }
-                        else
-                        {
-                            Parameters_.Dflag = 'N'; //N
-                        }
-                    }
+                    Parameters_.Dflag = 'N';//quantum observables are calculated separately.
+
 
                     Hamiltonian_.InteractionsClusterCreate(i);
 

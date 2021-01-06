@@ -89,11 +89,11 @@ int main(int argc, char *argv[]) {
 
      MCEngine_.RUN_MC();      // Monte-Carlo Engine
 
-     Observables_.Calculate_Nw();
-
     }
 
     else if (ex_string=="ve"){ //observe
+
+        Parameters_.Dflag = 'V';
         double Classical_E, QuantE;
         Classical_E= Hamiltonian_.GetCLEnergy();
         cout <<"Classical_E = "<<Classical_E<<endl;
@@ -104,19 +104,23 @@ int main(int argc, char *argv[]) {
 
         int n_states_occupied_zeroT;
         double initial_mu_guess;
-        n_states_occupied_zeroT = Coordinates_.nbasis_*2.0*(Parameters_.Fill/(Parameters_.n_orbs*2.0));
 
-        if(!Parameters_.fixed_mu_value){
+        n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(Parameters_.n_orbs));
+        cout<<"n_states_occupied_zeroT = "<<n_states_occupied_zeroT<<endl;
+        if(!Parameters_.fix_mu){
            initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
         }
         else{
             initial_mu_guess=Parameters_.fixed_mu_value;
         }
 
+        cout<<"initial mu guess = "<<initial_mu_guess<<endl;
         Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, Parameters_.Fill);
+        cout<<"final mu = " <<Parameters_.mus<<endl;
         QuantE = Hamiltonian_.E_QM();
         cout <<"Quantum_E = "<<QuantE<<endl;
 
+        Observables_.calculate_local_density();
         Observables_.Calculate_Nw();
 
     }

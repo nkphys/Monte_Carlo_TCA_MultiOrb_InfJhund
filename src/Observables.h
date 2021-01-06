@@ -167,32 +167,32 @@ void Observables::Calculate_Akw()
                     c1 = Coordinates_.Nbasis(l_posx, l_posy, 0) + Coordinates_.nbasis_;
                     c2 = Coordinates_.Nbasis(j_posx, j_posy, 0) + Coordinates_.nbasis_;
                     A_dn_00[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
+                            Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
                     c1 = Coordinates_.Nbasis(l_posx, l_posy, 0);
                     c2 = Coordinates_.Nbasis(j_posx, j_posy, 0);
                     A_up_00[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
+                            Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
                     c1 = Coordinates_.Nbasis(l_posx, l_posy, 1) + Coordinates_.nbasis_;
                     c2 = Coordinates_.Nbasis(j_posx, j_posy, 1) + Coordinates_.nbasis_;
                     A_dn_11[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
+                            Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
                     c1 = Coordinates_.Nbasis(l_posx, l_posy, 1);
                     c2 = Coordinates_.Nbasis(j_posx, j_posy, 1);
                     A_up_11[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
+                            Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
                     c1 = Coordinates_.Nbasis(l_posx, l_posy, 2) + Coordinates_.nbasis_;
                     c2 = Coordinates_.Nbasis(j_posx, j_posy, 2) + Coordinates_.nbasis_;
                     A_dn_22[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
+                            Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
                     c1 = Coordinates_.Nbasis(l_posx, l_posy, 2);
                     c2 = Coordinates_.Nbasis(j_posx, j_posy, 2);
                     A_up_22[j][l][omega_ind] += conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c2, n) *
-                                                Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
+                            Lorentzian(omega_min + (omega_ind * d_omega) - Hamiltonian_.eigs_[n], eta);
 
                 }
 
@@ -279,34 +279,34 @@ void Observables::Calculate_Akw()
                     l_posy = Coordinates_.indy_cellwise(l);
 
                     temp_up_00 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy) )) *
-                                  A_up_00[j][l][omega_ind];
+                            exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                ky * (j_posy - l_posy) )) *
+                            A_up_00[j][l][omega_ind];
 
                     temp_dn_00 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy))) *
-                                  A_dn_00[j][l][omega_ind];
+                            exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                ky * (j_posy - l_posy))) *
+                            A_dn_00[j][l][omega_ind];
 
                     temp_up_11 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy) )) *
-                                  A_up_11[j][l][omega_ind];
+                            exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                ky * (j_posy - l_posy) )) *
+                            A_up_11[j][l][omega_ind];
 
                     temp_dn_11 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy))) *
-                                  A_dn_11[j][l][omega_ind];
+                            exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                ky * (j_posy - l_posy))) *
+                            A_dn_11[j][l][omega_ind];
 
                     temp_up_22 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy) )) *
-                                  A_up_22[j][l][omega_ind];
+                            exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                ky * (j_posy - l_posy) )) *
+                            A_up_22[j][l][omega_ind];
 
                     temp_dn_22 += one_complex *
-                                  exp(iota_complex * (kx * (j_posx - l_posx) +
-                                                      ky * (j_posy - l_posy))) *
-                                  A_dn_22[j][l][omega_ind];
+                            exp(iota_complex * (kx * (j_posx - l_posx) +
+                                                ky * (j_posy - l_posy))) *
+                            A_dn_22[j][l][omega_ind];
 
                 }
             }
@@ -331,7 +331,7 @@ void Observables::Calculate_Nw()
 
 
     //---------Read from input file-----------------------//
-    string fileout = "Nw_total.txt";
+    string fileout = "Nw_" + Parameters_.Seed_file_name_;
     double omega_min, omega_max, d_omega;
     double eta = 0.1;
     omega_min = -100;
@@ -455,7 +455,7 @@ double Observables::fermi_function(int n)
 
 void Observables::calculate_quantum_SiSj()
 {
- /*
+    /*
     Matrix<complex<double>> F_u_u;
     Matrix<complex<double>> F_d_d;
     Matrix<complex<double>> F_u_d;
@@ -507,12 +507,12 @@ void Observables::calculate_quantum_SiSj()
                 nx = (jx + ix) % lx_;
                 ny = (jy + iy) % ly_;
                 i_ = Coordinates_.Nc(nx, ny);
-                quantum_SiSj_(ix, iy) += ( 
-                0.25*(F_u_u(i_, i_) * F_u_u(j, j) + F_u_u(i_, j) * omF_u_u(j, i_) 
+                quantum_SiSj_(ix, iy) += (
+                0.25*(F_u_u(i_, i_) * F_u_u(j, j) + F_u_u(i_, j) * omF_u_u(j, i_)
                     - ( F_u_u(i_, i_) * F_d_d(j, j) + F_u_d(i_, j) * omF_d_u(j, i_) )
                     - ( F_d_d(i_, i_) * F_u_u(j, j) + F_d_u(i_, j) * omF_u_d(j, i_) )
                     + F_d_d(i_, i_) * F_d_d(j, j) + F_d_d(i_, j) * omF_d_d(j, i_))
-                    + 0.5 * (F_u_d(i_, i_) * F_d_u(j, j) + F_u_u(i_, j) * omF_d_d(j, i_)) 
+                    + 0.5 * (F_u_d(i_, i_) * F_d_u(j, j) + F_u_u(i_, j) * omF_d_d(j, i_))
                     + 0.5 * (F_d_u(i_, i_) * F_u_d(j, j) + F_d_d(i_, j) * omF_u_u(j, i_))
                     ).real();
             }
@@ -547,22 +547,29 @@ void Observables::calculate_quantum_SiSj()
 
 void Observables::calculate_local_density()
 {
+    string File_Out_local_density = "local_density_" + Parameters_.Seed_file_name_ ;
+    ofstream File_Out_Local_Density(File_Out_local_density.c_str());
+     File_Out_Local_Density<<"#ix   iy    orb    density"<<endl;
     int c1;
-    complex<double> value = zero_complex;
+    double value;
     // cout <<"Parameter mus="<< Parameters_.mus<<endl;
-    for (int i = 0; i < nbasis_; i++)
+    for (int ix = 0; ix < lx_; ix++)
     {
-        for (int sigma = 0; sigma < 2; sigma++)
+        for (int iy = 0; iy < ly_; iy++)
         {
-            local_density[i][sigma] = 0.0;
-            c1 = i + (sigma * nbasis_);
-            for (int n = 0; n < Hamiltonian_.eigs_.size(); n++)
+            for (int orb = 0; orb < n_orbs_; orb++)
             {
-                local_density[i][sigma] += (conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c1, n) * fermi_function(n)).real();
-            }
 
-            // value += (conj(Hamiltonian_.Ham_(c1, 1)) * Hamiltonian_.Ham_(c1, 1));
+                value = 0.0;
+                c1 = Coordinates_.Nbasis_[ix][iy][orb];
+                for (int n = 0; n < Hamiltonian_.eigs_.size(); n++)
+                {
+                    value += (conj(Hamiltonian_.Ham_(c1, n)) * Hamiltonian_.Ham_(c1, n) * fermi_function(n)).real();
+                }
+            File_Out_Local_Density<<ix<<"  "<<iy<<"  "<<orb<<"  "<<value<<endl;
+            }
         }
+        File_Out_Local_Density<<endl;
     }
 }
 
