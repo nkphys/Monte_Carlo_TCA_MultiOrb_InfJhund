@@ -94,7 +94,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
                     n1 += double(1.0 / (exp((eigs_[j] - mu_out) * Parameters_.beta) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if (abs(N - n1) < double(0.00001))
+                if (abs(N - n1) < double(0.01))
                 {
                     //cout<<abs(N-n1)<<endl;
                     converged = true;
@@ -132,7 +132,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
                     n1 += double(1.0 / (exp((eigs_[j] - mu_temp) * Parameters_.beta) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if (abs(N - n1) < double(0.00001))
+                if (abs(N - n1) < double(0.01))
                 {
                     //cout<<abs(N-n1)<<endl;
                     converged = true;
@@ -201,7 +201,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
                     n1 += double(1.0 / (exp((eigsCluster_[j] - mu_out) * Parameters_.beta) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if (abs(N - n1) < double(0.00001))
+                if (abs(N - n1) < double(0.01))
                 {
                     //cout<<abs(N-n1)<<endl;
                     converged = true;
@@ -239,7 +239,7 @@ double Hamiltonian::chemicalpotentialCluster(double muin, double filling)
                     n1 += double(1.0 / (exp((eigsCluster_[j] - mu_temp) * Parameters_.beta) + 1.0));
                 }
                 //cout <<"i  "<< i << "  n1  " << n1 << "  mu  " << mu_out<< endl;
-                if (abs(N - n1) < double(0.00001))
+                if (abs(N - n1) < double(0.01))
                 {
                     //cout<<abs(N-n1)<<endl;
                     converged = true;
@@ -548,8 +548,30 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
 
 
-
         // * +x direction Neighbor
+        if(!Parameters_.ED_){ //i.e. using TCA
+        if(lx_pos==(CoordinatesCluster_.lx_-1)){ //cluster boundary condition used except cluster coundary matches System boundary
+          phasex=Parameters_.ClusterBoundaryConnection*1.0;
+        }
+        else{
+          phasex=1.0;
+        }
+
+        if (x_pos == (Coordinates_.lx_ - 1)) // At the boundary of Full system
+        {
+            phasex = Parameters_.BoundaryConnection*one_complex;
+        }
+        }
+        else{//i.e. doing ED
+            if (x_pos == (Coordinates_.lx_ - 1)) // At the boundary of Full system
+            {
+                phasex = Parameters_.BoundaryConnection*one_complex;
+            }
+            else{
+                phasex=1.0;
+            }
+        }
+
         m = CoordinatesCluster_.neigh(l, 0); //+x neighbour cell
         mx_pos = CoordinatesCluster_.indx_cellwise(m);
         my_pos = CoordinatesCluster_.indy_cellwise(m);
@@ -560,18 +582,6 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
         theta_m = MFParams_.etheta(x_pos_p, y_pos_p);
         phi_m = MFParams_.ephi(x_pos_p, y_pos_p);
-
-
-        if (mx_pos == (CoordinatesCluster_.lx_ - 1))
-        {
-            phasex = Parameters_.ClusterBoundaryConnection;
-            phasey = one_complex;
-        }
-        else
-        {
-            phasex = one_complex;
-            phasey = one_complex;
-        }
 
 
         for(int orb1=0;orb1<n_orbs_;orb1++){
@@ -592,6 +602,29 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
 
         // * +y direction Neighbor
+        if(!Parameters_.ED_){ //i.e. using TCA
+        if(ly_pos==(CoordinatesCluster_.ly_-1)){ //cluster boundary is used except cluster coundary matches System boundary
+          phasey=Parameters_.ClusterBoundaryConnection*1.0;
+        }
+        else{
+          phasey=1.0;
+        }
+
+        if (y_pos == (Coordinates_.ly_ - 1)) // At the boundary of Full system
+        {
+            phasey = Parameters_.BoundaryConnection*one_complex;
+        }
+        }
+        else{//i.e. doing ED
+            if (y_pos == (Coordinates_.ly_ - 1)) // At the boundary of Full system
+            {
+                phasey = Parameters_.BoundaryConnection*one_complex;
+            }
+            else{
+                phasey=1.0;
+            }
+        }
+
         m = CoordinatesCluster_.neigh(l, 2); //+y neighbour cell
         mx_pos = CoordinatesCluster_.indx_cellwise(m);
         my_pos = CoordinatesCluster_.indy_cellwise(m);
@@ -604,16 +637,7 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
         theta_m = MFParams_.etheta(x_pos_p, y_pos_p);
         phi_m = MFParams_.ephi(x_pos_p, y_pos_p);
 
-        if (my_pos == (CoordinatesCluster_.ly_ - 1))
-        {
-            phasex = one_complex;
-            phasey = Parameters_.ClusterBoundaryConnection;
-        }
-        else
-        {
-            phasex = one_complex;
-            phasey = one_complex;
-        }
+
 
 
         for(int orb1=0;orb1<n_orbs_;orb1++){
