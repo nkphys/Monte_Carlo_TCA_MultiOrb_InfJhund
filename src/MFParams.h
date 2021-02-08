@@ -34,6 +34,8 @@ public:
     void Adjust_MCWindow();
     void Calculate_Fields_Avg();
     void Read_classical_DOFs(string filename);
+    void Push_to_Prob_Distributions(double theta_, double phi_);
+    double Lorentzian(double x, double brd);
 
     Parameters &Parameters_;
     Coordinates &Coordinates_;
@@ -43,6 +45,10 @@ public:
 
     uniform_real_distribution<double> dis1_; //for random fields
     uniform_real_distribution<double> dis2_; //for random disorder
+
+    Mat_1_doub Distribution_Phi, Distribution_Theta;
+    double d_Phi, d_Theta;
+    int N_Phi, N_Theta;
 
     //mt19937_64 mt_rand(Parameters_.RandomSeed);
 };
@@ -54,9 +60,9 @@ void MFParams::Adjust_MCWindow()
     //cout<<"ratio= "<< ratio << "temp= "<<Parameters_.temp << endl;
     Parameters_.AccCount[0] = 0;
     Parameters_.AccCount[1] = 0;
-    Parameters_.WindowSize *= abs(1.0 + 1.0 * (ratio - 0.5));
-    if(Parameters_.WindowSize>50000){
-        Parameters_.WindowSize=50000.0;
+    Parameters_.WindowSize *= abs(1.0 + 0.1 * (ratio - 0.5));
+    if(Parameters_.WindowSize>1){
+        Parameters_.WindowSize=1.0;
     }
     // Parameters_.WindowSize =0.2;
     cout << "Ratio: " << ratio << "  window size:  " << Parameters_.WindowSize << endl;
@@ -80,55 +86,67 @@ void MFParams::FieldThrow(int site, string mc_dof_type)
     {
         ephi(a, b) += 2 * Pi * (random1() - 0.5) * MC_Window;
 
-        Pi_multiple = ephi(a, b)/Pi;
+        // Pi_multiple = ephi(a, b)/Pi;
 
 
-        if (ephi(a, b) < 0.0)
-        {
-            ephi(a, b) = -ephi(a, b);
-        }
+        //        if (ephi(a, b) < 0.0)
+        //        {
+        //            ephi(a, b) = -ephi(a, b);
+        //        }
 
+        //
         ephi(a, b) = fmod(ephi(a, b), 2.0 * Pi);
-
-
+        //-------------
+        if( ephi(a,b) < 0.0) {ephi(a,b) += 2.0*Pi; }
+        if( ephi(a,b) >=2.0*Pi) {ephi(a,b) -= 2.0*Pi;}
+        //-----------
     }
 
     if (mc_dof_type == "theta")
     {
-        etheta(a, b) += Pi * (random1() - 0.5) * MC_Window;
-        if (etheta(a, b) < 0.0)
-        {
-            etheta(a, b) = -etheta(a, b);
-        }
 
-        etheta(a, b) = fmod(etheta(a, b),  Pi);
+        cout <<"Only theta is not allowed, use only phi instead"<<endl;
+        assert(false);
+
+    }
+
+    if (mc_dof_type == "theta_ising")
+    {
+
+        if(abs(etheta(a, b))<0.0001){ //i.e.=0
+            etheta(a, b) = Pi;
+        }
+        else{  //i.e. Pi
+            if((abs(etheta(a, b)-Pi)>0.0001)){
+                cout<<etheta(a, b)<<endl;
+                assert(abs(etheta(a, b)-Pi)<0.0001);
+            }
+
+            etheta(a, b) = 0;
+        }
 
     }
 
 
     if (mc_dof_type == "theta_and_phi")
     {
-        //phi
+
+
         ephi(a, b) += 2 * Pi * (random1() - 0.5) * MC_Window;
-
-        Pi_multiple = ephi(a, b)/Pi;
-
-        if (ephi(a, b) < 0.0)
-        {
-            ephi(a, b) = -ephi(a, b);
-        }
-
-        ephi(a, b) = fmod(ephi(a, b), 2.0 * Pi);
+        if( ephi(a,b) < 0.0) {ephi(a,b) += 2.0*Pi; }
+        if( ephi(a,b) >=2.0*Pi) {ephi(a,b) -= 2.0*Pi;}
 
 
-        //theta
         etheta(a, b) += Pi * (random1() - 0.5) * MC_Window;
-        if (etheta(a, b) < 0.0)
-        {
-            etheta(a, b) = -etheta(a, b);
+        if ( etheta(a,b) < 0.0 ) {
+            etheta(a,b) = - etheta(a,b);
+            ephi(a,b) = fmod( ephi(a,b)+Pi, 2.0*Pi );
+        }
+        if ( etheta(a,b) > Pi ) {
+            etheta(a,b) = 2.0*Pi - etheta(a,b);
+            ephi(a,b) = fmod( ephi(a,b) + Pi, 2.0*Pi );
         }
 
-        etheta(a, b) = fmod(etheta(a, b),  Pi);
     }
 
 
@@ -159,6 +177,7 @@ void MFParams::initialize()
 
     // srand(Parameters_.RandomSeed);
 
+
     etheta_avg.resize(lx_, ly_);
     ephi_avg.resize(lx_, ly_);
     Disorder.resize(lx_, ly_);
@@ -181,6 +200,8 @@ void MFParams::initialize()
     Initial_MC_DOF_file << "#ix   iy   Theta(x,y)    Phi(x,y)      Moment_Size(x,y)" << endl;
 
 
+
+
     string temp_string;
     int ix_, iy_, spin_offset;
     if (Parameters_.Read_Seed_from_file_ == true)
@@ -201,6 +222,17 @@ void MFParams::initialize()
 
     else
     {
+
+        //Initialization
+        for (int j = 0; j < ly_; j++)
+        {
+            for (int i = 0; i < lx_; i++)
+            {
+                ephi(i, j) = 0.0;
+                etheta(i, j) = PI*0.5;
+            }
+        }
+
         for (int j = 0; j < ly_; j++)
         {
             for (int i = 0; i < lx_; i++)
@@ -217,18 +249,16 @@ void MFParams::initialize()
                     {
                         ephi(i, j) = 2.0 * random1() * PI;
                     }
-                    else
-                    {
-                        ephi(i, j) = 0.0;
-                    }
+
 
                     if (Parameters_.MC_on_theta == true)
                     {
-                        etheta(i, j) = random1() * PI;
-                    }
-                    else
-                    {
-                        etheta(i, j) = 0.0;
+                        if(Parameters_.ThetaIsing){
+                            etheta(i, j) = int(random1()+0.5) * PI;
+                        }
+                        else{
+                            etheta(i, j) = random1() * PI;
+                        }
                     }
 
 
@@ -347,7 +377,44 @@ void MFParams::initialize()
         Disorder_conf_file << endl;
     }
 
+
+
+    //Initializing PDF's for Phi and Theta.
+    N_Phi=2000;
+    N_Theta=1000;
+    d_Phi=(2.0*PI)/(1.0*N_Phi);
+    d_Theta=PI/(1.0*N_Theta);
+    Distribution_Phi.resize(N_Phi);
+    Distribution_Theta.resize(N_Theta);
+    //Phi_val=d_Phi*N_Phi
+    //Theta_val=d_Theta*N_Theta;
+
+
 } // ----------
+
+double MFParams::Lorentzian(double x, double brd)
+{
+    double temp;
+
+    temp = (1.0 / PI) * ((brd / 2.0) / ((x * x) + ((brd * brd) / 4.0)));
+
+    return temp;
+}
+
+void MFParams::Push_to_Prob_Distributions(double theta_, double phi_){
+    double eta_=0.01;
+
+    for(int theta_no=0;theta_no<Distribution_Theta.size();theta_no++){
+        Distribution_Theta[theta_no] +=Lorentzian(theta_-theta_no*d_Theta, eta_)*(1.0/(Parameters_.IterMax*Coordinates_.ncells_));
+    }
+
+    for(int phi_no=0;phi_no<Distribution_Phi.size();phi_no++){
+        Distribution_Phi[phi_no] +=Lorentzian(phi_-phi_no*d_Phi, eta_)*(1.0/(Parameters_.IterMax*Coordinates_.ncells_));
+    }
+
+    //cout<<"theta = "<<theta_<<", phi = "<<phi_<<endl;
+
+}
 
 void MFParams::Calculate_Fields_Avg()
 {

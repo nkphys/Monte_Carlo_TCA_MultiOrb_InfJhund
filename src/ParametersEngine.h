@@ -35,12 +35,13 @@ public:
 
     bool Cooling_;
     bool ED_;
+    bool IgnoreFermions;
 
     bool Metropolis_Algorithm;
     bool Heat_Bath_Algorithm;
 
     bool MC_on_theta, MC_on_phi, MC_on_theta_and_phi, MC_on_theta_and_phi_and_u, MC_on_moment_size, MC_on_local_density;
-
+    bool ThetaIsing;
     bool fix_mu;
 
     double fixed_mu_value;
@@ -114,6 +115,11 @@ void Parameters::Initialize(string inputfile_)
         else if (temp_string == "theta")
         {
             MC_on_theta = true;
+        }
+        else if (temp_string == "theta_ising")
+        {
+            MC_on_theta = true;
+            ThetaIsing=true;
         }
         else if (temp_string == "theta_and_phi")
         {
@@ -242,11 +248,13 @@ void Parameters::Initialize(string inputfile_)
     metropolis_double = double(matchstring(inputfile_, "Metropolis_Algo"));
     if (metropolis_double == 1.0)
     {
+        cout<<"Using Metropolis"<<endl;
         Metropolis_Algorithm = true;
         Heat_Bath_Algorithm = false;
     }
     else if (metropolis_double == 0.0)
     {
+        cout<<"using Heat Bath"<<endl;
         Metropolis_Algorithm = false;
         Heat_Bath_Algorithm = true;
     }
@@ -340,6 +348,14 @@ void Parameters::Initialize(string inputfile_)
     {
         cout << "ERROR:Read_Seed_from_file can be only 1 (true) or 0 (false)" << endl;
         assert(Read_Seed_from_file_double == 0.0);
+    }
+
+    double IgnoreFermions_double = int(matchstring(inputfile_, "IgnoreFermions"));
+    if(IgnoreFermions_double== 1.0){
+        IgnoreFermions = true;
+    }
+    else{
+        IgnoreFermions=false;
     }
 
     Seed_file_name_ = matchstring2(inputfile_, "Seed_file_name");

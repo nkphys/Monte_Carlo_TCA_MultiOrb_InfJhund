@@ -77,6 +77,16 @@ void MCEngine::RUN_MC()
 
     //while (temp_ >= Parameters_.temp_min)
     for(int temp_point=0;temp_point<Parameters_.Temp_values.size();temp_point++){
+
+
+        for(int theta_no=0;theta_no<MFParams_.Distribution_Theta.size();theta_no++){
+            MFParams_.Distribution_Theta[theta_no] =0.0;
+        }
+
+        for(int phi_no=0;phi_no<MFParams_.Distribution_Phi.size();phi_no++){
+            MFParams_.Distribution_Phi[phi_no] =0.0;
+        }
+
         temp_ = Parameters_.Temp_values[temp_point];
         cout << "Temperature = " << temp_ << " is being done" << endl;
         Parameters_.temp = temp_;
@@ -121,8 +131,8 @@ void MCEngine::RUN_MC()
         File_Out_theta_phi = "ThetaPhi_Temp" + string(temp_char) + ".txt";
         ofstream File_Out_Theta_Phi(File_Out_theta_phi.c_str());
 
-//        File_Out_local_density = "local_density" + string(temp_char) + ".txt";
-//        ofstream File_Out_Local_Density(File_Out_local_density.c_str());
+        //        File_Out_local_density = "local_density" + string(temp_char) + ".txt";
+        //        ofstream File_Out_Local_Density(File_Out_local_density.c_str());
 
         File_Out_real_space_corr = "classical_real_space_corr" + string(temp_char) + ".txt";
         ofstream File_Out_Real_Space_Corr(File_Out_real_space_corr.c_str());
@@ -130,11 +140,11 @@ void MCEngine::RUN_MC()
         File_Out_q_space_corr = "classical_momentum_space_corr" + string(temp_char) + ".txt";
         ofstream File_Out_Q_Space_Corr(File_Out_q_space_corr.c_str());
 
-//        File_Out_quantum_real_space_corr = "quantum_real_space_corr" + string(temp_char) + ".txt";
-//        ofstream File_Out_Quantum_Real_Space_Corr(File_Out_quantum_real_space_corr.c_str());
+        //        File_Out_quantum_real_space_corr = "quantum_real_space_corr" + string(temp_char) + ".txt";
+        //        ofstream File_Out_Quantum_Real_Space_Corr(File_Out_quantum_real_space_corr.c_str());
 
-//        File_Out_quantum_q_space_corr = "quantum_momentum_space_corr" + string(temp_char) + ".txt";
-//        ofstream File_Out_Quantum_Q_Space_Corr(File_Out_quantum_q_space_corr.c_str());
+        //        File_Out_quantum_q_space_corr = "quantum_momentum_space_corr" + string(temp_char) + ".txt";
+        //        ofstream File_Out_Quantum_Q_Space_Corr(File_Out_quantum_q_space_corr.c_str());
 
         file_out_progress << "Total " << Parameters_.IterMax << " sweeps are performed." << endl;
         file_out_progress << "First " << Parameters_.IterMax - (Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg) << " sweeps are used for thermalization and every " << Gap_bw_sweeps + 1 << " in last " << Gap_bw_sweeps * (MC_sweeps_used_for_Avg - 1) + MC_sweeps_used_for_Avg << " sweeps are used for measurement." << endl;
@@ -153,30 +163,30 @@ void MCEngine::RUN_MC()
                           << setw(15) << "E_CL" << setw(15) << "E_QM" << setw(15) << "E_Total" << setw(15) << "mu" << endl;
 
         PrevE = Hamiltonian_.GetCLEnergy();
-        Hamiltonian_.InteractionsCreate();
-        //        Hamiltonian_.Ham_.print();
-        //cout << "Here 1"<<endl;
-        // Hamiltonian_.Check_Hermiticity();
-        //cout << "Here 2" << endl;
-        Hamiltonian_.Diagonalize(Parameters_.Dflag);
 
-        //        for(int n=0;n<2*Parameters_.ns;n++){
-        //            cout<<n<<"  "<<Hamiltonian_.eigs_[n]<<endl;
-        //        }
-        //        assert(false);
 
-        n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
-        if(!Parameters_.fix_mu){
-            initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
+        if(!Parameters_.IgnoreFermions){
+            Hamiltonian_.InteractionsCreate();
+            Hamiltonian_.Diagonalize(Parameters_.Dflag);
+            n_states_occupied_zeroT = Coordinates_.nbasis_*(Parameters_.Fill/(n_orbs_));
+            if(!Parameters_.fix_mu){
+                initial_mu_guess = 0.5 * (Hamiltonian_.eigs_[n_states_occupied_zeroT - 1] + Hamiltonian_.eigs_[n_states_occupied_zeroT]);
+            }
+            else{
+                initial_mu_guess=Parameters_.fixed_mu_value;
+            }
+            //initial_mu_guess=0.25;
+            Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, (Parameters_.Fill/(n_orbs_)));
+            Prev_QuantE = Hamiltonian_.E_QM();
+            muu_prev = Parameters_.mus;
+            Hamiltonian_.copy_eigs(1);
         }
         else{
-            initial_mu_guess=Parameters_.fixed_mu_value;
+            Prev_QuantE=0.0;
+            muu_prev=0.0;
         }
-        //initial_mu_guess=0.25;
-        Parameters_.mus = Hamiltonian_.chemicalpotential(initial_mu_guess, (Parameters_.Fill/(n_orbs_)));
-        Prev_QuantE = Hamiltonian_.E_QM();
-        muu_prev = Parameters_.mus;
-        Hamiltonian_.copy_eigs(1);
+
+
         cout << "Initial Classical Energy[Full System] = " << PrevE << endl;
         cout << "Initial Quantum Energy[Full System] = " << Prev_QuantE << endl;
         cout << "Initial Total Energy[Full System] = " << PrevE + Prev_QuantE << endl;
@@ -203,21 +213,18 @@ void MCEngine::RUN_MC()
 
                     //***Before change*************//
 
+                    //PrevE = Hamiltonian_.GetCLEnergy();
                     if (ED_ == false)
                     {
                         //TCA is used
                         Parameters_.Dflag = 'N'; //N
-                        PrevE = Hamiltonian_.GetCLEnergy();
-
-                        Hamiltonian_.InteractionsClusterCreate(i);
-                        Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
-
-                        //n_states_occupied_zeroT=Parameters_.Fill*Hamiltonian_.eigsCluster_.size();
-                        //initial_mu_guess=0.5*(Hamiltonian_.eigsCluster_[n_states_occupied_zeroT-1] + HamiltonianCluster_.eigs_[n_states_occupied_zeroT])
-                        muu_prevCluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_)));
-                        Prev_QuantECluster = Hamiltonian_.E_QMCluster();
-
-                        Hamiltonian_.copy_eigs_Cluster(1);
+                        if(!Parameters_.IgnoreFermions){
+                            Hamiltonian_.InteractionsClusterCreate(i);
+                            Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
+                            muu_prevCluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_)));
+                            Prev_QuantECluster = Hamiltonian_.E_QMCluster();
+                            Hamiltonian_.copy_eigs_Cluster(1);
+                        }
                     }
                     else
                     {
@@ -235,34 +242,41 @@ void MCEngine::RUN_MC()
 
 
                     MFParams_.FieldThrow(i, Parameters_.MC_DOF[mc_dof]);
+                    MFParams_.Push_to_Prob_Distributions(MFParams_.etheta(x, y), MFParams_.ephi(x, y));
+
                     CurrE = Hamiltonian_.GetCLEnergy();
 
                     Parameters_.Dflag = 'N';//quantum observables are calculated separately.
 
 
-                    Hamiltonian_.InteractionsClusterCreate(i);
+                    if(!Parameters_.IgnoreFermions){
+                        Hamiltonian_.InteractionsClusterCreate(i);
+                        Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
+                        Parameters_.mus_Cluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_)));
+                        Curr_QuantECluster = Hamiltonian_.E_QMCluster();
 
-                    Hamiltonian_.DiagonalizeCluster(Parameters_.Dflag);
-
-                    Parameters_.mus_Cluster = Hamiltonian_.chemicalpotentialCluster(muu_prevCluster, (Parameters_.Fill/(n_orbs_)));
-
-                    Curr_QuantECluster = Hamiltonian_.E_QMCluster();
-
-                    //Ratio of Quantum partition functions
-                    /*P = [ Tr(exp(-beta(Hquant_new)))/Tr(exp(-beta(Hquant_old)))]*
+                        //Ratio of Quantum partition functions
+                        /*P = [ Tr(exp(-beta(Hquant_new)))/Tr(exp(-beta(Hquant_old)))]*
                       [exp(-beta*E_classical(New)) / exp(-beta*E_classical(old))]
                      * [sin(Theta_i(New)) / sin(Theta_i(Old)) ]*/
-                    /*exp(P12) = P
+                        /*exp(P12) = P
                   P12 = log (P)
                   */
 
-                    //same mu-refrence is used, otherwise engine does not work properly
-                    P_new = ProbCluster(muu_prevCluster*1.0, muu_prevCluster*1.0);
+                        //same mu-refrence is used, otherwise engine does not work properly
+                        P_new = ProbCluster(muu_prevCluster*1.0, muu_prevCluster*1.0);
+                    }
+                    else{
+                        P_new=0.0;
+                    }
+
+
                     P12 = P_new - Parameters_.beta * ((CurrE) - (PrevE));
                     //P12 = - Parameters_.beta*((CurrE)-(PrevE));
                     //cout<<P12<<endl;
+                    if(Parameters_.MC_on_theta_and_phi){
                     P12 += log((sin(MFParams_.etheta(x, y)) / sin(saved_Params[0])));
-
+                    }
 
 
                     //Heat bath algorithm [See page-129 of Prof. Elbio's Book]
@@ -289,15 +303,15 @@ void MCEngine::RUN_MC()
        * Random number < P -----> ACCEPT
        * Random number > P -----> REJECT
        */
-
+                   // cout<<i<<"  "<<count<<"   "<<Prob_check<<", CurrE="<<CurrE<<" ,PrevE="<<PrevE<<endl;
                     //ACCEPTED
                     if (Prob_check > ( MFParams_.random1()) )
                     {
                         Parameters_.AccCount[0]++;
                         act = 1;
+                        PrevE = CurrE;
                         if (ED_)
                         {
-                            PrevE = CurrE;
                             Prev_QuantECluster = Curr_QuantECluster;
                             Hamiltonian_.copy_eigs_Cluster(1);
                             muu_prevCluster = Parameters_.mus_Cluster;
@@ -354,7 +368,7 @@ void MCEngine::RUN_MC()
                 if (ED_ == false)
                 {
 
-                 /* No diagonalization for Full system is done
+                    /* No diagonalization for Full system is done
                     //TCA is used
                     Parameters_.Dflag = 'V';
                     Hamiltonian_.InteractionsCreate();
@@ -515,6 +529,23 @@ void MCEngine::RUN_MC()
         string File_Out_theta_phi_microState0_toread = "ThetaPhi_Temp" + string(temp_char) +
                 "MicroState0.txt";
         MFParams_.Read_classical_DOFs(File_Out_theta_phi_microState0_toread);
+
+
+
+        string File_Out_PDF_theta = "PDF_Theta" + string(temp_char) +".txt";
+        ofstream File_Out_PDF_Theta(File_Out_PDF_theta.c_str());
+        File_Out_PDF_Theta<<"# theta_no Theta_val PDF  for dTheta="<<MFParams_.d_Theta<<endl;
+        string File_Out_PDF_phi = "PDF_Phi" + string(temp_char) +".txt";
+        ofstream File_Out_PDF_Phi(File_Out_PDF_phi.c_str());
+        File_Out_PDF_Theta<<"# phi_no Phi_val PDF  for dPhi="<<MFParams_.d_Phi<<endl;
+        for(int theta_no=0;theta_no<MFParams_.Distribution_Theta.size();theta_no++){
+            File_Out_PDF_Theta<<theta_no<<"  "<<theta_no*MFParams_.d_Theta<<"   "<<MFParams_.Distribution_Theta[theta_no]<<endl;
+        }
+
+        for(int phi_no=0;phi_no<MFParams_.Distribution_Phi.size();phi_no++){
+            File_Out_PDF_Phi<<phi_no<<"  "<<phi_no*MFParams_.d_Phi<<"   "<<MFParams_.Distribution_Phi[phi_no]<<endl;
+        }
+
     } //Temperature loop
 
 } // ---------
