@@ -15,6 +15,7 @@ public:
     double mus, mus_Cluster, Fill, pi;
     double Total_Particles;
     double K1x, K1y;
+    double Hz_mag;
     Mat_1_doub J_Hund, OnSiteE;
     double lambda_lattice;
     double k_const;
@@ -30,6 +31,9 @@ public:
     Matrix<double> hopping_NN_Y;
     Matrix<double> hopping_NNN_PXPY;
     Matrix<double> hopping_NNN_PXMY;
+
+    bool Using_LongRangeExchange;
+    Mat_2_doub LongRangeInteractions;
 
     Mat_1_string MC_DOF;
 
@@ -160,6 +164,7 @@ void Parameters::Initialize(string inputfile_)
     SavingMicroscopicStates_int = int(matchstring(inputfile_, "SavingMicroscopicStates"));
     fix_mu = matchstring(inputfile_, "Fix_mu");
     fixed_mu_value = double(matchstring(inputfile_, "fixed_mu_value")) * 1.0;
+    Hz_mag = double(matchstring(inputfile_, "MagneticField_z"));
     BoundaryConnection = double(matchstring(inputfile_, "PBC"));
     ClusterBoundaryConnection = double(matchstring(inputfile_, "ClusterPBC"));
 
@@ -358,6 +363,15 @@ void Parameters::Initialize(string inputfile_)
         IgnoreFermions=false;
     }
 
+
+    double Using_LongRangeExchange_double = matchstring(inputfile_, "Using_LongRangeExchange");
+    if(Using_LongRangeExchange_double==1.0){
+        Using_LongRangeExchange=true;
+    }
+    else{
+        Using_LongRangeExchange=false;
+    }
+
     Seed_file_name_ = matchstring2(inputfile_, "Seed_file_name");
 
     Last_n_sweeps_for_measurement = int(matchstring(inputfile_, "Last_n_sweeps_for_measurement"));
@@ -370,6 +384,42 @@ void Parameters::Initialize(string inputfile_)
 
     WindowSize = double(0.01);
     mus = 0.25;
+
+
+
+    //Long Range exchange b/w classical spins
+    complex<double> Int_temp;
+    LongRangeInteractions.resize(ns);
+    for(int basis_=0;basis_<ns;basis_++){
+        LongRangeInteractions[basis_].resize(ns);
+        for(int basis2=0;basis2<ns;basis2++ ){
+            LongRangeInteractions[basis_][basis2]=0.0;
+        }
+    }
+
+    if(Using_LongRangeExchange){
+        string line_temp;
+        int site_i, site_j;
+        cout<<"Using Long Range Exchange file"<<endl;
+        string file_nonlocal_int_connections_=matchstring2(inputfile_,"File_NonLocal_Exchange_Connections");
+        ifstream inputfile_nonlocal_int_connections(file_nonlocal_int_connections_.c_str());
+        getline(inputfile_nonlocal_int_connections,line_temp); //#site_i site_j J[site_i][site_j]
+
+        if(inputfile_nonlocal_int_connections.is_open())
+        {
+            while(getline(inputfile_nonlocal_int_connections,line_temp))
+            {
+                stringstream line_temp_ss2(line_temp);
+                line_temp_ss2 >> site_i >> site_j >> Int_temp;
+                LongRangeInteractions[site_i][site_j]=Int_temp.real();
+            }
+            inputfile_nonlocal_int_connections.close();
+        }
+        else
+        {cout<<"Unable to open file = '"<<file_nonlocal_int_connections_<<"'"<<endl;}
+    }
+
+
     cout << "____________________________________" << endl;
 }
 

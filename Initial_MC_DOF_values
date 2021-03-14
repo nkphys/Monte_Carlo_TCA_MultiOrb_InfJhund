@@ -1,0 +1,2 @@
+#seed=11 for mt19937_64 Generator is used
+#ix   iy   Theta(x,y)    Phi(x,y)      Moment_Size(x,y)

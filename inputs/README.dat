@@ -1,0 +1,1 @@
+g++ Localdensity_triangular_from_Theta.cpp; file="ThetaPhi_Temp0.0010000000MicroState0";./a.out 12 12 ${file} 0.001;pdflatex ${file}.tex ;xdg-open ${file}.pdf

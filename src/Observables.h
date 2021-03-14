@@ -41,6 +41,7 @@ public:
     void SiSjQ_Average();
     void SiSj_Average();
     void Total_Energy_Average(double Curr_QuantE, double CurrE);
+    void Get_Avg_Total_Sz();
 
     void OccDensity(int tlabel);
     void DOSprint(int tlabel);
@@ -58,6 +59,7 @@ public:
     Matrix<complex<double>> SiSjQ_, SiSjQ_Mean_, SiSjQ_square_Mean_;
     Matrix<double> SiSj_Mean_, SiSj_square_Mean_;
     double Nematic_order_mean_, Nematic_order_square_mean_;
+    double Avg_Total_Sz, Avg_Total_Sz_sqr, Total_Sz;
     Parameters &Parameters_;
     Coordinates &Coordinates_;
     MFParams &MFParams_;
@@ -576,6 +578,8 @@ void Observables::calculate_local_density()
 void Observables::SiSjFULL()
 {
 
+
+    Total_Sz=0.0;
     double Cos_ij, Sin_ij, ei, ai, phase;
     int site_, site_p, ax, ay;
 
@@ -589,8 +593,12 @@ void Observables::SiSjFULL()
             sx_[site_] = MFParams_.Moment_Size(i, j)*cos(ai) * sin(ei);
             sy_[site_] = MFParams_.Moment_Size(i, j)*sin(ai) * sin(ei);
             sz_[site_] = MFParams_.Moment_Size(i, j)*cos(ei);
+
+            Total_Sz +=sz_[site_];
         }
     }
+
+
 
     for (int xr = 0; xr < lx_; xr++)
     {
@@ -716,6 +724,13 @@ void Observables::Total_Energy_Average(double Curr_QuantE, double CurrE)
 
     AVG_Total_Energy += Curr_QuantE + CurrE;
     AVG_Total_Energy_sqr += (Curr_QuantE + CurrE) * (Curr_QuantE + CurrE);
+}
+
+
+void Observables::Get_Avg_Total_Sz(){
+
+    Avg_Total_Sz +=Total_Sz;
+    Avg_Total_Sz_sqr +=Total_Sz*Total_Sz;
 }
 
 void Observables::OccDensity(int tlabel)

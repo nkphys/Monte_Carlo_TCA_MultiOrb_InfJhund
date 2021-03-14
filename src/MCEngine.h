@@ -49,7 +49,7 @@ void MCEngine::RUN_MC()
     int MC_sweeps_used_for_Avg = Parameters_.Last_n_sweeps_for_measurement;
     int Gap_bw_sweeps = Parameters_.Measurement_after_each_m_sweeps;
 
-    double PrevE, CurrE, P_new, P12, muu_prev;
+    double PrevE, CurrE, P_new, P12, muu_prev, Diff_ClassE;
     double Prob_check;
     double muu_prevCluster;
     double Prev_QuantE;
@@ -92,6 +92,7 @@ void MCEngine::RUN_MC()
         Parameters_.temp = temp_;
         Parameters_.beta = double( 1.0/(Parameters_.Boltzman_constant*temp_));
 
+
         for (int ix = 0; ix < lx_; ix++)
         {
             for (int iy = 0; iy < ly_; iy++)
@@ -114,6 +115,9 @@ void MCEngine::RUN_MC()
                 //                Observables_.quantum_SiSj_square_Mean_(ix, iy) = zero;
             }
         }
+
+        Observables_.Avg_Total_Sz=0.0;
+        Observables_.Avg_Total_Sz_sqr=0.0;
         Observables_.AVG_Total_Energy = 0.0;
         Observables_.AVG_Total_Energy_sqr = 0.0;
         Observables_.Nematic_order_square_mean_ = 0.0;
@@ -244,7 +248,7 @@ void MCEngine::RUN_MC()
                     MFParams_.FieldThrow(i, Parameters_.MC_DOF[mc_dof]);
                     MFParams_.Push_to_Prob_Distributions(MFParams_.etheta(x, y), MFParams_.ephi(x, y));
 
-                    CurrE = Hamiltonian_.GetCLEnergy();
+                    //CurrE = Hamiltonian_.GetCLEnergy();
 
                     Parameters_.Dflag = 'N';//quantum observables are calculated separately.
 
@@ -270,8 +274,9 @@ void MCEngine::RUN_MC()
                         P_new=0.0;
                     }
 
+                    Diff_ClassE=Hamiltonian_.Get_CLEnergy_Diff(saved_Params[0], saved_Params[1], i);
 
-                    P12 = P_new - Parameters_.beta * ((CurrE) - (PrevE));
+                    P12 = P_new - Parameters_.beta * (Diff_ClassE);
                     //P12 = - Parameters_.beta*((CurrE)-(PrevE));
                     //cout<<P12<<endl;
                     if(Parameters_.MC_on_theta_and_phi){
@@ -309,7 +314,7 @@ void MCEngine::RUN_MC()
                     {
                         Parameters_.AccCount[0]++;
                         act = 1;
-                        PrevE = CurrE;
+                        //PrevE = CurrE;
                         if (ED_)
                         {
                             Prev_QuantECluster = Curr_QuantECluster;
@@ -402,6 +407,7 @@ void MCEngine::RUN_MC()
                 if (zero_or_not == 0)
                 {
 
+                    CurrE=Hamiltonian_.GetCLEnergy();
                     Observables_.SiSjFULL();
                     Observables_.SiSjQ_Average();
                     Observables_.SiSj_Average();
@@ -413,6 +419,7 @@ void MCEngine::RUN_MC()
 
                     //Just Classical Energy
                     Observables_.Total_Energy_Average(0.0, CurrE);
+                    Observables_.Get_Avg_Total_Sz();
                     MFParams_.Calculate_Fields_Avg();
 
                     if ((Parameters_.Saving_Microscopic_States == true) &&
@@ -483,7 +490,7 @@ void MCEngine::RUN_MC()
 
         file_out_progress << "Total " << Confs_used << " configurations were used were measurement" << endl;
 
-        temp_ = temp_ - Parameters_.d_Temp;
+        //temp_ = temp_ - Parameters_.d_Temp;
 
         File_Out_Theta_Phi << "#x" << setw(15) << "y" << setw(15) << "Theta_avg(x,y)" << setw(15) << "Phi_avg(x,y)" << endl;
         for (int ix = 0; ix < lx_; ix++)
@@ -521,7 +528,7 @@ void MCEngine::RUN_MC()
 
                 temp_site_ = Coordinates_.Ncell(ix, iy);
                 File_Out_Q_Space_Corr << qx << setw(15) << qy << setw(15) << Observables_.SiSjQ_Mean(ix, iy).real() / (Confs_used * 1.0)
-                                      << setw(15) << sqrt(((Observables_.SiSjQ_square_Mean(ix, iy).real() / (Confs_used * 1.0)) - ((Observables_.SiSjQ_Mean(ix, iy) * Observables_.SiSjQ_Mean(ix, iy)).real() / (Confs_used * Confs_used * 1.0)))) << endl;
+                                      << setw(15) << sqrt(((Observables_.SiSjQ_square_Mean(ix, iy).real() / (Confs_used * 1.0)) - ((Observables_.SiSjQ_Mean(ix, iy) * Observables_.SiSjQ_Mean(ix, iy)).real()/ (Confs_used * Confs_used * 1.0)))) << endl;
             }
             File_Out_Q_Space_Corr << endl;
         }
@@ -546,6 +553,8 @@ void MCEngine::RUN_MC()
             File_Out_PDF_Phi<<phi_no<<"  "<<phi_no*MFParams_.d_Phi<<"   "<<MFParams_.Distribution_Phi[phi_no]<<endl;
         }
 
+        file_out_progress<<"Total_Avg_classical_energy "<<temp_<<"  "<<Observables_.AVG_Total_Energy/(Confs_used * 1.0)<<"  "<<sqrt(((Observables_.AVG_Total_Energy_sqr / (Confs_used * 1.0)) - ((Observables_.AVG_Total_Energy * Observables_.AVG_Total_Energy)/(Confs_used * Confs_used * 1.0))))<<endl;
+        file_out_progress<<"Total_Sz_Avg "<<Observables_.Avg_Total_Sz/(Confs_used)<<"   "<<sqrt(((Observables_.Avg_Total_Sz_sqr / (Confs_used * 1.0)) - ((Observables_.Avg_Total_Sz * Observables_.Avg_Total_Sz)/(Confs_used * Confs_used * 1.0))))<<endl;
     } //Temperature loop
 
 } // ---------

@@ -65,7 +65,7 @@ void MFParams::Adjust_MCWindow()
         Parameters_.WindowSize=1.0;
     }
     // Parameters_.WindowSize =0.2;
-    cout << "Ratio: " << ratio << "  window size:  " << Parameters_.WindowSize << endl;
+    //cout << "Ratio: " << ratio << "  window size:  " << Parameters_.WindowSize << endl;
     return;
 } // ----------
 

@@ -29,6 +29,7 @@ public:
     void Initialize();                                     //::DONE
     void Hoppings();                                       //::DONE
     double GetCLEnergy();                                  //::DONE
+    double Get_CLEnergy_Diff(double theta_old, double phi_old, int center_site);
     void InteractionsCreate();                             //::DONE
     void InteractionsClusterCreate(int Center_site);       //::DONE
     void Check_Hermiticity();                              //::DONE
@@ -87,7 +88,7 @@ double Hamiltonian::chemicalpotential(double muin, double filling)
         {
             for (int i = 0; i < 1000000; i++)
             {
-               // cout<<mu_out<<"  "<<n1<<endl;
+                // cout<<mu_out<<"  "<<n1<<endl;
                 n1 = 0.0;
                 for (int j = 0; j < nstate; j++)
                 {
@@ -350,6 +351,80 @@ double Hamiltonian::E_QMCluster()
     return E;
 } // ----------
 
+double Hamiltonian::Get_CLEnergy_Diff(double theta_old, double phi_old, int center_site){
+
+    double E_diff;
+    int cell;
+    double ei, ai;
+
+    E_diff=0.0;
+    double sx_j,sy_j,sz_j;
+    double sx_old, sy_old, sz_old;
+    double sx_new, sy_new, sz_new;
+
+    int _ix, _iy;
+
+    //New
+    _ix = Coordinates_.indx_cellwise(center_site);
+    _iy = Coordinates_.indy_cellwise(center_site);
+    ei = MFParams_.etheta(_ix, _iy);
+    ai = MFParams_.ephi(_ix, _iy);
+    sx_new = MFParams_.Moment_Size(_ix, _iy) * cos(ai) * sin(ei);
+    sy_new = MFParams_.Moment_Size(_ix, _iy) * sin(ai) * sin(ei);
+    sz_new = MFParams_.Moment_Size(_ix, _iy) * cos(ei);
+
+    //Old
+    sx_old = MFParams_.Moment_Size(_ix, _iy) * cos(phi_old) * sin(theta_old);
+    sy_old = MFParams_.Moment_Size(_ix, _iy) * sin(phi_old) * sin(theta_old);
+    sz_old = MFParams_.Moment_Size(_ix, _iy) * cos(theta_old);
+
+    if(!Parameters_.Using_LongRangeExchange){
+
+        cell = Coordinates_.neigh(center_site, 0); //+x
+        _ix = Coordinates_.indx_cellwise(cell);
+        _iy = Coordinates_.indy_cellwise(cell);
+        ei = MFParams_.etheta(_ix, _iy);
+        ai = MFParams_.ephi(_ix, _iy);
+        sx_j = MFParams_.Moment_Size(_ix, _iy) * cos(ai) * sin(ei);
+        sy_j = MFParams_.Moment_Size(_ix, _iy) * sin(ai) * sin(ei);
+        sz_j = MFParams_.Moment_Size(_ix, _iy) * cos(ei);
+        E_diff += 1.0 * Parameters_.K1x * ( ((sx_new -sx_old) * sx_j) + ((sy_new -sy_old) * sy_j) + ((sz_new -sz_old) * sz_j));
+
+        cell = Coordinates_.neigh(center_site, 2); //+y
+        _ix = Coordinates_.indx_cellwise(cell);
+        _iy = Coordinates_.indy_cellwise(cell);
+        ei = MFParams_.etheta(_ix, _iy);
+        ai = MFParams_.ephi(_ix, _iy);
+        sx_j = MFParams_.Moment_Size(_ix, _iy) * cos(ai) * sin(ei);
+        sy_j = MFParams_.Moment_Size(_ix, _iy) * sin(ai) * sin(ei);
+        sz_j = MFParams_.Moment_Size(_ix, _iy) * cos(ei);
+        E_diff += 1.0 * Parameters_.K1y * ( ((sx_new -sx_old) * sx_j) + ((sy_new -sy_old) * sy_j) + ((sz_new -sz_old) * sz_j));
+
+    }
+    else{
+        for (int i = 0; i < ncells_; i++){
+            if(i!=center_site){
+                _ix = Coordinates_.indx_cellwise(i);
+                _iy = Coordinates_.indy_cellwise(i);
+                ei = MFParams_.etheta(_ix, _iy);
+                ai = MFParams_.ephi(_ix, _iy);
+                sx_j = MFParams_.Moment_Size(_ix, _iy) * cos(ai) * sin(ei);
+                sy_j = MFParams_.Moment_Size(_ix, _iy) * sin(ai) * sin(ei);
+                sz_j = MFParams_.Moment_Size(_ix, _iy) * cos(ei);
+                E_diff += 1.0 * Parameters_.LongRangeInteractions[center_site][i]*( ((sx_new -sx_old) * sx_j) + ((sy_new -sy_old) * sy_j) + ((sz_new -sz_old) * sz_j));
+
+            }
+        }
+
+    }
+
+    //Magnetic field along Z
+    E_diff += -1.0*Parameters_.Hz_mag*(sz_new - sz_old);
+
+    return E_diff;
+
+}
+
 double Hamiltonian::GetCLEnergy()
 {
 
@@ -374,15 +449,31 @@ double Hamiltonian::GetCLEnergy()
     EClassical = double(0.0);
 
     int _ix, _iy;
-    for (int i = 0; i < ncells_; i++)
-    {
-        _ix = Coordinates_.indx_cellwise(i);
-        _iy = Coordinates_.indy_cellwise(i);
 
-        cell = Coordinates_.neigh(i, 0); //+x
-        EClassical += 1.0 * Parameters_.K1x * ( (sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
-        cell = Coordinates_.neigh(i, 2); //+y
-        EClassical += Parameters_.K1y * ((sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
+    if(!Parameters_.Using_LongRangeExchange){
+        for (int i = 0; i < ncells_; i++)
+        {
+            _ix = Coordinates_.indx_cellwise(i);
+            _iy = Coordinates_.indy_cellwise(i);
+
+            cell = Coordinates_.neigh(i, 0); //+x
+            EClassical += 1.0 * Parameters_.K1x * ( (sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
+            cell = Coordinates_.neigh(i, 2); //+y
+            EClassical += Parameters_.K1y * ((sx_[i] * sx_[cell]) + (sy_[i] * sy_[cell]) + (1.0 * sz_[i] * sz_[cell]));
+        }
+    }
+    else{
+        for (int i = 0; i < ncells_; i++){
+            for (int j = 0; j < ncells_; j++){
+                EClassical += 0.5*Parameters_.LongRangeInteractions[i][j]*( (sx_[i]*sx_[j]) + (sy_[i]*sy_[j]) + (sz_[i]*sz_[j]));
+            }
+        }
+
+    }
+
+    //Magnetic field along Z
+    for(int i=0;i<ncells_;i++){
+        EClassical += -1.0*Parameters_.Hz_mag*sz_[i];
     }
 
     return EClassical;
@@ -550,17 +641,17 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
         // * +x direction Neighbor
         if(!Parameters_.ED_){ //i.e. using TCA
-        if(lx_pos==(CoordinatesCluster_.lx_-1)){ //cluster boundary condition used except cluster coundary matches System boundary
-          phasex=Parameters_.ClusterBoundaryConnection*1.0;
-        }
-        else{
-          phasex=1.0;
-        }
+            if(lx_pos==(CoordinatesCluster_.lx_-1)){ //cluster boundary condition used except cluster coundary matches System boundary
+                phasex=Parameters_.ClusterBoundaryConnection*1.0;
+            }
+            else{
+                phasex=1.0;
+            }
 
-        if (x_pos == (Coordinates_.lx_ - 1)) // At the boundary of Full system
-        {
-            phasex = Parameters_.BoundaryConnection*one_complex;
-        }
+            if (x_pos == (Coordinates_.lx_ - 1)) // At the boundary of Full system
+            {
+                phasex = Parameters_.BoundaryConnection*one_complex;
+            }
         }
         else{//i.e. doing ED
             if (x_pos == (Coordinates_.lx_ - 1)) // At the boundary of Full system
@@ -603,17 +694,17 @@ void Hamiltonian::InteractionsClusterCreate(int Center_site)
 
         // * +y direction Neighbor
         if(!Parameters_.ED_){ //i.e. using TCA
-        if(ly_pos==(CoordinatesCluster_.ly_-1)){ //cluster boundary is used except cluster coundary matches System boundary
-          phasey=Parameters_.ClusterBoundaryConnection*1.0;
-        }
-        else{
-          phasey=1.0;
-        }
+            if(ly_pos==(CoordinatesCluster_.ly_-1)){ //cluster boundary is used except cluster coundary matches System boundary
+                phasey=Parameters_.ClusterBoundaryConnection*1.0;
+            }
+            else{
+                phasey=1.0;
+            }
 
-        if (y_pos == (Coordinates_.ly_ - 1)) // At the boundary of Full system
-        {
-            phasey = Parameters_.BoundaryConnection*one_complex;
-        }
+            if (y_pos == (Coordinates_.ly_ - 1)) // At the boundary of Full system
+            {
+                phasey = Parameters_.BoundaryConnection*one_complex;
+            }
         }
         else{//i.e. doing ED
             if (y_pos == (Coordinates_.ly_ - 1)) // At the boundary of Full system
